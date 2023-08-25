@@ -1,9 +1,11 @@
 POST http://localhost:3003/api/blogs/
 Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ikp1a3N1VG9tbWkiLCJpZCI6IjY0ZTg3YTE4ZTFmMzM5OWViODBiNGU4MCIsImlhdCI6MTY5Mjk2MzEyN30.fk2ljCe0ebt8LheTYWgCoDHihukWSu8M2oXVdpLdXj4
 
 {
-  "title": "Kaisan blogi",
-  "author": "Vilkaisale Vilen",
-  "url": "https://kaisan-blogi.com",
-  "likes": 88
+  "title": "Saken blogi",
+  "author": "Sakke Vilen",
+  "url": "https://saken-blogi.com",
+  "likes": 1,
+  "userId": "64e87a18e1f3399eb80b4e80"
 }

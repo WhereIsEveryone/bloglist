@@ -1,0 +1,10 @@
+PUT http://localhost:3003/api/blogs/64e855e5deec54a66e3e3a19
+Content-Type: application/json
+
+{
+    "title": "Willen blogi",
+    "author": "Ville Vilen",
+    "url": "https://willen-blogi.fi",
+    "likes": 52,
+    "id": "64e855e5deec54a66e3e3a19"
+}

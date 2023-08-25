@@ -10,6 +10,8 @@ beforeEach(async () => {
   await Blog.insertMany(helper.initialBlogs)
 })
 
+describe('general', () => {
+
 test('blogs are returned as json', async () => {
   await api
     .get('/api/blogs')
@@ -33,6 +35,32 @@ test('a specific blog title is within the returned blogs', async () => {
   )
 })
 
+test('there is an id field in the response', async () => {
+  const blogsAtStart = await helper.blogsInDb()
+  blogsAtStart.forEach(blog => {
+    expect(blog.id).toBeDefined();
+  })
+})
+
+test('likes defaults to 0 when a blog with undefined likes is added', async () => {
+  const newBlog = {
+    title: "Kallen blogi",
+    author: "Kalle Vilen",
+    url: "https://kallen-blogi.fi",
+    likes: undefined
+  }
+
+  await api
+    .post('/api/blogs')
+    .send(newBlog)
+
+  const blogsAtEnd = await helper.blogsInDb()
+  const blogToInspect = blogsAtEnd.find((blog) => blog.title === 'Kallen blogi')
+  expect(blogToInspect.likes).toBe(0)
+})
+})
+
+describe('adding a blog', () => {
 test('a valid blog can be added ', async () => {
   const newBlog = {
     title: "Annan blogi",
@@ -90,7 +118,9 @@ test('blog without url is not added', async () => {
 
   expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length)
 })
+})
 
+describe('viewing blogs', () => {
 test('a specific blog can be viewed', async () => {
   const blogsAtStart = await helper.blogsInDb()
 
@@ -104,6 +134,24 @@ test('a specific blog can be viewed', async () => {
   expect(resultBlog.body).toEqual(blogToView)
 })
 
+test('fails with statuscode 404 if blog does not exist', async () => {
+  const validNonexistingId = await helper.nonExistingId()
+
+    await api
+      .get(`/api/blogs/${validNonexistingId}`)
+      .expect(404)
+})
+
+test('fails with statuscode 400 id is invalid', async () => {
+    const invalidId = '5a3d5da59070081a82a3445'
+
+    await api
+      .get(`/api/blogs/${invalidId}`)
+      .expect(400)
+})
+})
+
+describe('deleting blogs', () => {
 test('a blog can be deleted', async () => {
   const blogsAtStart = await helper.blogsInDb()
   const blogToDelete = blogsAtStart[0]
@@ -123,28 +171,73 @@ test('a blog can be deleted', async () => {
   expect(contents).not.toContain(blogToDelete.title)
 })
 
-test('there is an id field in the response', async () => {
-  const blogsAtStart = await helper.blogsInDb()
-  blogsAtStart.forEach(blog => {
-    expect(blog.id).toBeDefined();
-  })
+test('delete fails with statuscode 404 if blog does not exist', async () => {
+  const validNonexistingId = await helper.nonExistingId()
+
+    await api
+      .delete(`/api/blogs/${validNonexistingId}`)
+      .expect(404)
 })
 
-test('likes defaults to 0 when a blog with undefined likes is added', async () => {
-  const newBlog = {
-    title: "Kallen blogi",
-    author: "Kalle Vilen",
-    url: "https://kallen-blogi.fi",
-    likes: undefined
-  }
+test('delete fails with statuscode 400 if id is invalid', async () => {
+    const invalidId = '5a3d5da59070081a82a3445'
 
-  await api
-    .post('/api/blogs')
-    .send(newBlog)
+    await api
+      .delete(`/api/blogs/${invalidId}`)
+      .expect(400)
+})
+})
 
-  const blogsAtEnd = await helper.blogsInDb()
-  const blogToInspect = blogsAtEnd.find((blog) => blog.title === 'Kallen blogi')
-  expect(blogToInspect.likes).toBe(0)
+describe('updating blogs', () => {
+  test('blog is updated', async () => {
+    const blogsAtStart = await helper.blogsInDb()
+    const blogToUpdate = blogsAtStart[0]
+    const newBlog = {
+      title: blogToUpdate.title,
+      author: blogToUpdate.author,
+      url: blogToUpdate.url,
+      likes: blogToUpdate.likes + 1
+    }
+  
+    await api
+      .put(`/api/blogs/${blogToUpdate.id}`)
+      .send(newBlog)
+      .expect(200)
+  
+    const response = await api
+      .get(`/api/blogs/${blogToUpdate.id}`)
+    expect(response.body.likes).toBe(blogToUpdate.likes + 1)
+  })
+
+  test('update fails with statuscode 404 if blog does not exist', async () => {
+    const validNonexistingId = await helper.nonExistingId()
+    const newBlog = {
+      title: "OldTitle",
+      author: "OldAuthor",
+      url: "OldUrl",
+      likes: 1000
+    }
+  
+    await api
+      .put(`/api/blogs/${validNonexistingId}`)
+      .send(newBlog)
+      .expect(404)
+  })
+
+  test('update fails with statuscode 400 if id is invalid', async () => {
+    const invalidId = '5a3d5da59070081a82a3445'
+    const newBlog = {
+      title: "OldTitle",
+      author: "OldAuthor",
+      url: "OldUrl",
+      likes: 1000
+    }
+  
+    await api
+      .put(`/api/blogs/${invalidId}`)
+      .send(newBlog)
+      .expect(400)
+  })
 })
 
 afterAll(async () => {
